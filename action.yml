@@ -1,0 +1,57 @@
+name: 'Cascavel Header Guard'
+description: 'Audit HTTP security headers of any URL. Checks HSTS, CSP, X-Frame-Options, and 15+ headers with scoring.'
+author: 'RET Tecnologia'
+
+branding:
+  icon: 'lock'
+  color: 'blue'
+
+inputs:
+  urls:
+    description: 'Comma-separated URLs to scan (e.g., https://example.com,https://api.example.com)'
+    required: true
+  fail-score:
+    description: 'Minimum passing score (0-100). Pipeline fails if any URL scores below this'
+    required: false
+    default: '50'
+  fail-on-missing-critical:
+    description: 'Fail if any critical header is missing (HSTS, CSP, X-Content-Type-Options)'
+    required: false
+    default: 'true'
+  timeout:
+    description: 'HTTP request timeout in seconds'
+    required: false
+    default: '10'
+  follow-redirects:
+    description: 'Follow HTTP redirects'
+    required: false
+    default: 'true'
+  user-agent:
+    description: 'Custom User-Agent string'
+    required: false
+    default: 'Cascavel-HeaderGuard/1.0 (+https://rettecnologia.org)'
+
+outputs:
+  total-score:
+    description: 'Average score across all scanned URLs (0-100)'
+  worst-score:
+    description: 'Lowest score among all scanned URLs'
+  missing-critical:
+    description: 'Number of missing critical headers across all URLs'
+  report-path:
+    description: 'Path to the detailed JSON report'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Cascavel Header Guard
+      id: scan
+      shell: bash
+      env:
+        INPUT_URLS: ${{ inputs.urls }}
+        INPUT_FAIL_SCORE: ${{ inputs.fail-score }}
+        INPUT_FAIL_CRITICAL: ${{ inputs.fail-on-missing-critical }}
+        INPUT_TIMEOUT: ${{ inputs.timeout }}
+        INPUT_FOLLOW: ${{ inputs.follow-redirects }}
+        INPUT_UA: ${{ inputs.user-agent }}
+      run: bash "${{ github.action_path }}/scanner.sh"
